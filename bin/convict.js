@@ -7,11 +7,26 @@
 
 // const json5 = require('json5');
 // const fs        = require('fs');
-const validator = require('validator');
-const moment = require('moment');
+
+var _typeof =
+  typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol'
+    ? function(obj) {
+      return typeof obj;
+    }
+    : function(obj) {
+      return obj &&
+          typeof Symbol === 'function' &&
+          obj.constructor === Symbol &&
+          obj !== Symbol.prototype
+        ? 'symbol'
+        : typeof obj;
+    };
+
+var validator = require('validator');
+var moment = require('moment');
 // const parseArgs = require('yargs-parser');
-const cloneDeep = require('lodash.clonedeep');
-const deprecate = require('depd')('node-convict');
+var cloneDeep = require('lodash.clonedeep');
+var deprecate = require('depd')('node-convict');
 
 function assert(assertion, err_msg) {
   if (!assertion) {
@@ -46,21 +61,21 @@ function isWindowsNamedPipe(x) {
   return String(x).includes('\\\\.\\pipe\\');
 }
 
-const types = {
-  '*': function() {},
-  int: function(x) {
+var types = {
+  '*': function _() {},
+  int: function int(x) {
     assert(Number.isInteger(x), 'must be an integer');
   },
-  nat: function(x) {
+  nat: function nat(x) {
     assert(Number.isInteger(x) && x >= 0, 'must be a positive integer');
   },
-  port: function(x) {
+  port: function port(x) {
     assert(isPort(x), 'ports must be within range 0 - 65535');
   },
-  windows_named_pipe: function(x) {
+  windows_named_pipe: function windows_named_pipe(x) {
     assert(isWindowsNamedPipe(x), 'must be a valid pipe');
   },
-  port_or_windows_named_pipe: function(x) {
+  port_or_windows_named_pipe: function port_or_windows_named_pipe(x) {
     if (!isWindowsNamedPipe(x)) {
       assert(
         isPort(x),
@@ -68,17 +83,17 @@ const types = {
       );
     }
   },
-  url: function(x) {
+  url: function url(x) {
     assert(validator.isURL(x), 'must be a URL');
   },
-  email: function(x) {
+  email: function email(x) {
     assert(validator.isEmail(x), 'must be an email address');
   },
-  ipaddress: function(x) {
+  ipaddress: function ipaddress(x) {
     assert(validator.isIP(x), 'must be an IP address');
   },
-  duration: function(x) {
-    let err_msg =
+  duration: function duration(x) {
+    var err_msg =
       'must be a positive integer or human readable string (e.g. 3000, "5 days")';
     if (Number.isInteger(x)) {
       assert(x >= 0, err_msg);
@@ -86,28 +101,32 @@ const types = {
       assert(x.match(/^(\d)+ (.+)$/), err_msg);
     }
   },
-  timestamp: function(x) {
+  timestamp: function timestamp(x) {
     assert(Number.isInteger(x) && x >= 0, 'must be a positive integer');
   },
 };
 // alias
 types.integer = types.int;
 
-const converters = {};
+var converters = {};
 
-const ALLOWED_OPTION_STRICT = 'strict';
-const ALLOWED_OPTION_WARN = 'warn';
+var ALLOWED_OPTION_STRICT = 'strict';
+var ALLOWED_OPTION_WARN = 'warn';
 
 function flatten(obj, useProperties) {
-  let stack = Object.keys(obj);
-  let key;
+  var stack = Object.keys(obj);
+  var key = void 0;
 
-  let entries = [];
+  var entries = [];
 
   while (stack.length) {
     key = stack.shift();
-    let val = walk(obj, key);
-    if (typeof val === 'object' && !Array.isArray(val) && val != null) {
+    var val = walk(obj, key);
+    if (
+      (typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object' &&
+      !Array.isArray(val) &&
+      val != null
+    ) {
       if (useProperties) {
         if ('properties' in val) {
           val = val.properties;
@@ -117,7 +136,7 @@ function flatten(obj, useProperties) {
           continue;
         }
       }
-      let subkeys = Object.keys(val);
+      var subkeys = Object.keys(val);
 
       // Don't filter out empty objects
       if (subkeys.length > 0) {
@@ -130,36 +149,36 @@ function flatten(obj, useProperties) {
     entries.push([key, val]);
   }
 
-  let flattened = {};
+  var flattened = {};
   entries.forEach(function(entry) {
-    let key = entry[0];
+    var key = entry[0];
     if (useProperties) {
       key = key.replace(/\.properties/g, '');
     }
-    const val = entry[1];
+    var val = entry[1];
     flattened[key] = val;
   });
 
   return flattened;
 }
 
-function validate(instance, schema, strictValidation) {
-  let errors = {
+function _validate(instance, schema, strictValidation) {
+  var errors = {
     undeclared: [],
     invalid_type: [],
     missing: [],
   };
 
-  const flatInstance = flatten(instance);
-  const flatSchema = flatten(schema.properties, true);
+  var flatInstance = flatten(instance);
+  var flatSchema = flatten(schema.properties, true);
 
   Object.keys(flatSchema).forEach(function(name) {
-    const schemaItem = flatSchema[name];
-    let instanceItem = flatInstance[name];
+    var schemaItem = flatSchema[name];
+    var instanceItem = flatInstance[name];
     if (!(name in flatInstance)) {
       try {
         if (
-          typeof schemaItem.default === 'object' &&
+          _typeof(schemaItem.default) === 'object' &&
           !Array.isArray(schemaItem.default)
         ) {
           // Missing item may be an object with undeclared children, so try to
@@ -169,7 +188,7 @@ function validate(instance, schema, strictValidation) {
           throw new Error('missing');
         }
       } catch (e) {
-        const err = new Error(
+        var err = new Error(
           "configuration param '" +
             name +
             "' missing from config, did you override its parent?"
@@ -209,7 +228,7 @@ function validate(instance, schema, strictValidation) {
 
   if (strictValidation) {
     Object.keys(flatInstance).forEach(function(name) {
-      const err = new Error(
+      var err = new Error(
         "configuration param '" + name + "' not declared in the schema"
       );
       errors.undeclared.push(err);
@@ -227,7 +246,7 @@ function contains(options, x) {
   );
 }
 
-const BUILT_INS_BY_NAME = {
+var BUILT_INS_BY_NAME = {
   Object: Object,
   Array: Array,
   String: String,
@@ -235,15 +254,15 @@ const BUILT_INS_BY_NAME = {
   Boolean: Boolean,
   RegExp: RegExp,
 };
-const BUILT_IN_NAMES = Object.keys(BUILT_INS_BY_NAME);
-const BUILT_INS = BUILT_IN_NAMES.map(function(name) {
+var BUILT_IN_NAMES = Object.keys(BUILT_INS_BY_NAME);
+var BUILT_INS = BUILT_IN_NAMES.map(function(name) {
   return BUILT_INS_BY_NAME[name];
 });
 
 function normalizeSchema(name, node, props, fullName, env, argv, sensitive) {
   // If the current schema node is not a config property (has no "default"), recursively normalize it.
   if (
-    typeof node === 'object' &&
+    (typeof node === 'undefined' ? 'undefined' : _typeof(node)) === 'object' &&
     node !== null &&
     !Array.isArray(node) &&
     Object.keys(node).length > 0 &&
@@ -265,7 +284,7 @@ function normalizeSchema(name, node, props, fullName, env, argv, sensitive) {
     });
     return;
   } else if (
-    typeof node !== 'object' ||
+    (typeof node === 'undefined' ? 'undefined' : _typeof(node)) !== 'object' ||
     Array.isArray(node) ||
     node === null ||
     Object.keys(node).length == 0
@@ -274,7 +293,7 @@ function normalizeSchema(name, node, props, fullName, env, argv, sensitive) {
     node = { default: node };
   }
 
-  let o = cloneDeep(node);
+  var o = cloneDeep(node);
   props[name] = o;
   // associate this property with an environmental variable
   if (o.env) {
@@ -300,15 +319,15 @@ function normalizeSchema(name, node, props, fullName, env, argv, sensitive) {
   }
 
   // store original format function
-  let format = o.format;
-  let newFormat;
+  var format = o.format;
+  var newFormat = void 0;
 
   if (BUILT_INS.indexOf(format) >= 0 || BUILT_IN_NAMES.indexOf(format) >= 0) {
     // if the format property is a built-in JavaScript constructor,
     // assert that the value is of that type
-    let Format =
+    var Format =
       typeof format === 'string' ? BUILT_INS_BY_NAME[format] : format;
-    newFormat = function(x) {
+    newFormat = function newFormat(x) {
       assert(
         Object.prototype.toString.call(x) ==
           Object.prototype.toString.call(new Format()),
@@ -339,8 +358,8 @@ function normalizeSchema(name, node, props, fullName, env, argv, sensitive) {
 
   if (!newFormat && !format) {
     // default format is the typeof the default value
-    let type = Object.prototype.toString.call(o.default);
-    newFormat = function(x) {
+    var type = Object.prototype.toString.call(o.default);
+    newFormat = function newFormat(x) {
       assert(
         Object.prototype.toString.call(x) == type,
         ' should be of type ' + type.replace(/\[.* |]/g, '')
@@ -363,7 +382,7 @@ function normalizeSchema(name, node, props, fullName, env, argv, sensitive) {
 function importEnvironment(o) {
   Object.keys(o._env).forEach(function(envStr) {
     if (process.env[envStr] !== undefined) {
-      let ks = o._env[envStr];
+      var ks = o._env[envStr];
       ks.forEach(function(k) {
         o.set(k, process.env[envStr]);
       });
@@ -383,9 +402,9 @@ function importEnvironment(o) {
 
 function addDefaultValues(schema, c, instance) {
   Object.keys(schema.properties).forEach(function(name) {
-    let p = schema.properties[name];
+    var p = schema.properties[name];
     if (p.properties) {
-      let kids = c[name] || {};
+      var kids = c[name] || {};
       addDefaultValues(p, kids, instance);
       c[name] = kids;
     } else {
@@ -395,7 +414,10 @@ function addDefaultValues(schema, c, instance) {
 }
 
 function isObj(o) {
-  return typeof o === 'object' && o !== null;
+  return (
+    (typeof o === 'undefined' ? 'undefined' : _typeof(o)) === 'object' &&
+    o !== null
+  );
 }
 
 function overlay(from, to, schema) {
@@ -416,10 +438,10 @@ function overlay(from, to, schema) {
 }
 
 function traverseSchema(schema, path) {
-  let ar = path.split('.');
-  let o = schema;
+  var ar = path.split('.');
+  var o = schema;
   while (ar.length > 0) {
-    let k = ar.shift();
+    var k = ar.shift();
     if (o && o.properties && o.properties[k]) {
       o = o.properties[k];
     } else {
@@ -432,16 +454,16 @@ function traverseSchema(schema, path) {
 }
 
 function getFormat(schema, path) {
-  let o = traverseSchema(schema, path);
+  var o = traverseSchema(schema, path);
   if (o == null) return null;
   if (typeof o.format === 'string') return o.format;
-  if (o.default != null) return typeof o.default;
+  if (o.default != null) return _typeof(o.default);
   return null;
 }
 
 function coerce(k, v, schema, instance) {
   // magic coerceing
-  let format = getFormat(schema, k);
+  var format = getFormat(schema, k);
 
   if (typeof v === 'string') {
     if (converters.hasOwnProperty(format)) {
@@ -476,7 +498,7 @@ function coerce(k, v, schema, instance) {
       v = moment(v).valueOf();
       break;
     case 'duration': {
-      let split = v.split(' ');
+      var split = v.split(' ');
       if (split.length == 1) {
         // It must be an integer in string form.
         v = parseInt(v, 10);
@@ -503,9 +525,9 @@ function coerce(k, v, schema, instance) {
 
 function walk(obj, path, initializeMissing) {
   if (path) {
-    let ar = path.split('.');
+    var ar = path.split('.');
     while (ar.length) {
-      let k = ar.shift();
+      var k = ar.shift();
       if (initializeMissing && obj[k] == null) {
         obj[k] = {};
         obj = obj[k];
@@ -523,14 +545,14 @@ function walk(obj, path, initializeMissing) {
 /**
  * @returns a config object
  */
-let convict = function convict(def) {
+var convict = function convict(def) {
   // TODO: Rename this `rv` variable (supposedly "return value") into something
   // more meaningful.
-  let rv = {
+  var rv = {
     /**
      * Exports all the properties (that is the keys and their current values) as JSON
      */
-    getProperties: function() {
+    getProperties: function getProperties() {
       return cloneDeep(this._instance);
     },
 
@@ -539,13 +561,13 @@ let convict = function convict(def) {
      * a JSON string, with sensitive values masked. Sensitive values are masked
      * even if they aren't set, to avoid revealing any information.
      */
-    toString: function() {
-      let clone = cloneDeep(this._instance);
+    toString: function toString() {
+      var clone = cloneDeep(this._instance);
       this._sensitive.forEach(function(key) {
-        let path = key.split('.');
-        let childKey = path.pop();
-        let parentKey = path.join('.');
-        let parent = walk(clone, parentKey);
+        var path = key.split('.');
+        var childKey = path.pop();
+        var parentKey = path.join('.');
+        var parent = walk(clone, parentKey);
         parent[childKey] = '[Sensitive]';
       });
       return JSON.stringify(clone, null, 2);
@@ -554,14 +576,14 @@ let convict = function convict(def) {
     /**
      * Exports the schema as JSON.
      */
-    getSchema: function() {
+    getSchema: function getSchema() {
       return JSON.parse(JSON.stringify(this._schema));
     },
 
     /**
      * Exports the schema as a JSON string
      */
-    getSchemaString: function() {
+    getSchemaString: function getSchemaString() {
       return JSON.stringify(this._schema, null, 2);
     },
 
@@ -569,8 +591,8 @@ let convict = function convict(def) {
      * @returns the current value of the name property. name can use dot
      *     notation to reference nested values
      */
-    get: function(path) {
-      let o = walk(this._instance, path);
+    get: function get(path) {
+      var o = walk(this._instance, path);
       return cloneDeep(o);
     },
 
@@ -578,27 +600,27 @@ let convict = function convict(def) {
      * @returns the default value of the name property. name can use dot
      *     notation to reference nested values
      */
-    default: function(path) {
+    default: function _default(path) {
       // The default value for FOO.BAR.BAZ is stored in `_schema.properties` at:
       //   FOO.properties.BAR.properties.BAZ.default
       path = path.split('.').join('.properties.') + '.default';
-      let o = walk(this._schema.properties, path);
+      var o = walk(this._schema.properties, path);
       return cloneDeep(o);
     },
 
     /**
      * Resets a property to its default value as defined in the schema
      */
-    reset: function(prop_name) {
+    reset: function reset(prop_name) {
       this.set(prop_name, this.default(prop_name));
     },
 
     /**
      * @returns true if the property name is defined, or false otherwise
      */
-    has: function(path) {
+    has: function has(path) {
       try {
-        let r = this.get(path);
+        var r = this.get(path);
         // values that are set but undefined return false
         return typeof r !== 'undefined';
       } catch (e) {
@@ -611,12 +633,12 @@ let convict = function convict(def) {
      * nested values, e.g. "database.port". If objects in the chain don't yet
      * exist, they will be initialized to empty objects
      */
-    set: function(k, v) {
+    set: function set(k, v) {
       v = coerce(k, v, this._schema, this);
-      let path = k.split('.');
-      let childKey = path.pop();
-      let parentKey = path.join('.');
-      let parent = walk(this._instance, parentKey, true);
+      var path = k.split('.');
+      var childKey = path.pop();
+      var parentKey = path.join('.');
+      var parent = walk(this._instance, parentKey, true);
       parent[childKey] = v;
       return this;
     },
@@ -624,7 +646,7 @@ let convict = function convict(def) {
     /**
      * Loads and merges a JavaScript object into config
      */
-    load: function(conf) {
+    load: function load(conf) {
       overlay(conf, this._instance, this._schema);
       // environment and arguments always overrides config files
       importEnvironment(rv);
@@ -650,7 +672,7 @@ let convict = function convict(def) {
     /**
      * Validates config against the schema used to initialize it
      */
-    validate: function(options) {
+    validate: function validate(options) {
       options = options || {};
 
       if ('strict' in options) {
@@ -669,21 +691,21 @@ let convict = function convict(def) {
       }
 
       options.allowed = options.allowed || ALLOWED_OPTION_WARN;
-      let errors = validate(this._instance, this._schema, options.allowed);
+      var errors = _validate(this._instance, this._schema, options.allowed);
 
       if (
         errors.invalid_type.length +
         errors.undeclared.length +
         errors.missing.length
       ) {
-        let sensitive = this._sensitive;
+        var sensitive = this._sensitive;
 
-        let fillErrorBuffer = function(errors) {
-          let err_buf = '';
-          for (let i = 0; i < errors.length; i++) {
+        var fillErrorBuffer = function fillErrorBuffer(errors) {
+          var err_buf = '';
+          for (var i = 0; i < errors.length; i++) {
             if (err_buf.length) err_buf += '\n';
 
-            let e = errors[i];
+            var e = errors[i];
 
             if (e.fullName) {
               err_buf += e.fullName + ': ';
@@ -696,11 +718,11 @@ let convict = function convict(def) {
           return err_buf;
         };
 
-        const types_err_buf = fillErrorBuffer(errors.invalid_type);
-        const params_err_buf = fillErrorBuffer(errors.undeclared);
-        const missing_err_buf = fillErrorBuffer(errors.missing);
+        var types_err_buf = fillErrorBuffer(errors.invalid_type);
+        var params_err_buf = fillErrorBuffer(errors.undeclared);
+        var missing_err_buf = fillErrorBuffer(errors.missing);
 
-        let output_err_bufs = [types_err_buf, missing_err_buf];
+        var output_err_bufs = [types_err_buf, missing_err_buf];
 
         if (options.allowed === ALLOWED_OPTION_WARN && params_err_buf.length) {
           global.console.log('Warning: ' + params_err_buf);
@@ -708,7 +730,7 @@ let convict = function convict(def) {
           output_err_bufs.push(params_err_buf);
         }
 
-        let output = output_err_bufs
+        var output = output_err_bufs
           .filter(function(str) {
             return str.length;
           })
@@ -762,7 +784,9 @@ let convict = function convict(def) {
  * Adds a new custom format
  */
 convict.addFormat = function(name, validate, coerce) {
-  if (typeof name === 'object') {
+  if (
+    (typeof name === 'undefined' ? 'undefined' : _typeof(name)) === 'object'
+  ) {
     validate = name.validate;
     coerce = name.coerce;
     name = name.name;
